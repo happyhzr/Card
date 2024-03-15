@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using UnityEngine.SceneManagement;
 
 public class SceneController : MonoBehaviour
 {
@@ -11,10 +13,36 @@ public class SceneController : MonoBehaviour
 
     [SerializeField] MemoryCard originalCard;
     [SerializeField] Sprite[] images;
+    [SerializeField] TMP_Text scoreLabel;
+
+    private MemoryCard firstRevealed;
+    private MemoryCard secondRevealed;
+    private int score;
+
+    public bool canReveal { get { return secondRevealed == null; } }
+
+    public void CardRevealed(MemoryCard card)
+    {
+        if (firstRevealed == null)
+        {
+            firstRevealed = card;
+        }
+        else
+        {
+            secondRevealed = card;
+            StartCoroutine(CheckMatch());
+        }
+    }
+
+    public void Restart()
+    {
+        SceneManager.LoadScene("Scene");
+    }
 
     // Start is called before the first frame update
     void Start()
     {
+        score = 0;
         Vector3 startPos = originalCard.transform.position;
         int[] numbers = { 0, 0, 1, 1, 2, 2, 3, 3 };
         numbers = ShuffleArray(numbers);
@@ -58,5 +86,22 @@ public class SceneController : MonoBehaviour
             newArray[r] = tmp;
         }
         return newArray;
+    }
+
+    private IEnumerator CheckMatch()
+    {
+        if (firstRevealed.id == secondRevealed.id)
+        {
+            score++;
+            scoreLabel.text = $"Score: {score}";
+        }
+        else
+        {
+            yield return new WaitForSeconds(0.5f);
+            firstRevealed.UnReveal();
+            secondRevealed.UnReveal();
+        }
+        firstRevealed = null;
+        secondRevealed = null;
     }
 }
